@@ -1183,6 +1183,8 @@ export class Market extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
+
+    this.set("liquidityRate", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
@@ -1500,21 +1502,13 @@ export class Market extends Entity {
     }
   }
 
-  get liquidityRate(): BigInt | null {
+  get liquidityRate(): BigInt {
     let value = this.get("liquidityRate");
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigInt();
-    }
+    return value!.toBigInt();
   }
 
-  set liquidityRate(value: BigInt | null) {
-    if (!value) {
-      this.unset("liquidityRate");
-    } else {
-      this.set("liquidityRate", Value.fromBigInt(<BigInt>value));
-    }
+  set liquidityRate(value: BigInt) {
+    this.set("liquidityRate", Value.fromBigInt(value));
   }
 }
 

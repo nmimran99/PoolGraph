@@ -103,7 +103,7 @@ export function createMarket(marketID: string): Market {
 	market.lastUpdateTimestamp = 0
 	market.unbacked = null
 	market.isolationModeTotalDebt = null
-  market.liquidityRate = null
+  market.liquidityRate = new BigInt(50000)
   
   market.save()
   
@@ -141,4 +141,13 @@ export function getProtocol(protocolId: string): Protocol {
     protocol = createProtocol()
   }
   return protocol
+}
+
+export function calculateLiquidationProfit(liquidationRate: BigInt, debt: BigDecimal): BigDecimal {
+  if (!liquidationRate) {
+    return new BigDecimal(new BigInt(0));
+  }
+  return debt
+    .times(new BigDecimal(new BigInt(1000000)))
+    .div(new BigDecimal(liquidationRate))
 }

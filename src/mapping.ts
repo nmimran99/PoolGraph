@@ -11,7 +11,7 @@ import {
   Supply
 } from "../generated/Pool/Pool"
 import { BorrowEvent, Account, Market, RepayEvent, LiquidationEvent, WithdrawEvent, DepositEvent } from "../generated/schema"
-import { createAccount, updateCommonATokenStats, createMarket, getMarket, getAccount, getProtocol } from "./helpers";
+import { createAccount, updateCommonATokenStats, createMarket, getMarket, getAccount, getProtocol, calculateLiquidationProfit } from "./helpers";
 
 export function handleBorrow(event: Borrow): void {
   
@@ -114,15 +114,11 @@ export function handleLiquidation(event: LiquidationCall): void {
     .toHex()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
-
-  let received = market.liquidityRate 
-    ? event.params.debtToCover
-      .times(new BigInt(1000000))
-      .div(market.liquidityRate)
-      .toBigDecimal()
-    : new BigDecimal(new BigInt(0)) 
-
+  let received = calculateLiquidationProfit(market.liquidityRate, amount)
   
+  
+
+
   let liquidation = new LiquidationEvent(liquidationId)
   liquidation.id = liquidationId
   liquidation.protocol = protocol.id

@@ -118,7 +118,7 @@ type Market @entity {
 	lastUpdateTimestamp: Int
 	unbacked: BigDecimal
 	isolationModeTotalDebt: BigDecimal
-	liquidityRate: BigDecimal
+	liquidityRate: BigInt!
 }
 
 type Protocol @entity {
