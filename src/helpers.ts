@@ -1,5 +1,5 @@
 import { Bytes, BigInt, BigDecimal } from "@graphprotocol/graph-ts";
-import { Account, AccountAToken, AccountATokenTransaction, Reserve } from "../generated/schema";
+import { Account, AccountAToken, AccountATokenTransaction, Market, Protocol, Asset} from "../generated/schema";
 
 export let zeroBD = BigDecimal.fromString('0')
 
@@ -11,17 +11,17 @@ export function createAccount(accountID: string): Account {
 }
 
 export function updateCommonATokenStats(
-    reserveID: string,
+    marketID: string,
     accountID: string,
     tx_hash: Bytes,
     timestamp: BigInt,
     blockNumber: BigInt,
     logIndex: BigInt,
 ): AccountAToken {
-    let aTokenStatsID = reserveID.concat('-').concat(accountID);
+    let aTokenStatsID = marketID.concat('-').concat(accountID);
     let aTokenStats = AccountAToken.load(aTokenStatsID);
     if (aTokenStats == null) {
-        aTokenStats = createAccountAToken(aTokenStatsID , accountID, reserveID)
+        aTokenStats = createAccountAToken(aTokenStatsID , accountID, marketID)
     }
     getOrCreateAccountATokenTransaction(
         aTokenStatsID, 
@@ -37,10 +37,10 @@ export function updateCommonATokenStats(
 export function createAccountAToken(
     aTokenStatsID: string,
     accountID: string,
-    reserveID: string,
+    marketID: string,
   ): AccountAToken {
     let aTokenStats = new AccountAToken(aTokenStatsID)
-    aTokenStats.reserve = reserveID
+    aTokenStats.market = marketID
     aTokenStats.account = accountID
     aTokenStats.accrualBlockNumber = BigInt.fromI32(0)
     aTokenStats.aTokenBalance = zeroBD
@@ -50,7 +50,7 @@ export function createAccountAToken(
     aTokenStats.totalUnderlyingBorrowed = zeroBD
     aTokenStats.totalUnderlyingRepaid = zeroBD
     aTokenStats.storedBorrowBalance = zeroBD
-    aTokenStats.enteredReserve = false
+    aTokenStats.enteredMarket = false
     return aTokenStats
   }
 
@@ -83,20 +83,62 @@ export function createAccountAToken(
   }
 
 
-export function createReserve(reserveID: string): Reserve {
-  let reserve = new Reserve(reserveID);
-  reserve.aTokenAddress = null
-  reserve.stableDebtTokenAddress = null
-	reserve.variableDebtTokenAddress = null
-	reserve.interestRateStrategyAddress = null
-	reserve.accruedToTreasury = null
-	reserve.liquidityIndex = null
-	reserve.currentLiquidityRate = null
-	reserve.variableBorrowIndex = null
-	reserve.currentVariableBorrowRate = null
-	reserve.currentStableBorrowRate = null
-	reserve.lastUpdateTimestamp = 0
-	reserve.unbacked = null
-	reserve.isolationModeTotalDebt = null
-  return reserve;
+export function createMarket(marketID: string): Market {
+  let protocol = getProtocol("AAVEV3")
+  let market = new Market(marketID);
+  market.protocol = protocol.id
+  market.name = null
+  market.depositAsset = null
+  market.borrowAsset = null
+  market.aTokenAddress = null
+  market.stableDebtTokenAddress = null
+	market.variableDebtTokenAddress = null
+	market.interestRateStrategyAddress = null
+	market.accruedToTreasury = null
+	market.liquidityIndex = null
+	market.currentLiquidityRate = null
+	market.variableBorrowIndex = null
+	market.currentVariableBorrowRate = null
+	market.currentStableBorrowRate = null
+	market.lastUpdateTimestamp = 0
+	market.unbacked = null
+	market.isolationModeTotalDebt = null
+  market.liquidityRate = null
+  
+  market.save()
+  
+  return market;
+}
+
+export function createProtocol(): Protocol {
+    let protocol = new Protocol("AAVEV3")
+    protocol.network = "Rinkeby"
+    protocol.type = "Pooled"
+    protocol.riskType = "Global"
+    protocol.save()
+    return protocol
+}
+
+export function getMarket(marketId: string): Market {
+  let market = Market.load(marketId);
+  if (market == null) {
+    market = createMarket(marketId);
+  }
+  return market
+}
+
+export function getAccount(accountId: string): Account {
+  let account = Account.load(accountId);
+  if (account == null) {
+    account = createAccount(accountId);
+  }
+  return account
+}
+
+export function getProtocol(protocolId: string): Protocol {
+  let protocol = Protocol.load(protocolId)
+  if (!protocol) {
+    protocol = createProtocol()
+  }
+  return protocol
 }
