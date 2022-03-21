@@ -1,13 +1,10 @@
 {
-  "name": "PoolGraph",
+  "name": "aave-v3",
   "license": "UNLICENSED",
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ PoolGraph",
-    "create-local": "graph create --node http://localhost:8020/ PoolGraph",
-    "remove-local": "graph remove --node http://localhost:8020/ PoolGraph",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 PoolGraph"
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ davekaj/aave-v3"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.28.0",
