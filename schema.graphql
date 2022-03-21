@@ -1,136 +1,143 @@
-type Borrow @entity {
-	id: ID!
-	market: Market!
-	borrower: Account!
-	onBehalfOf: Bytes!
-	amount: BigDecimal
-	interestRateMode: Int
-	borrowRate: BigInt
-	blockNumber: Int!
-	blockTime: Int!
+interface Event {
+  id: ID!
+  blockNumber: Int!
+  blockTime: Int!
+  amount: BigDecimal!
+  market: Market!
 }
 
-type Repay @entity {
-	id: ID!
-	amount: BigDecimal
-	market: Market!
-	borrower: Account!
-	repayer: Account!
-	blockNumber: Int!
-	blockTime: Int!
-	useATokens: Boolean
+type Borrow implements Event @entity {
+  id: ID!
+  market: Market!
+  borrower: Account!
+  onBehalfOf: Bytes!
+  amount: BigDecimal
+  interestRateMode: Int
+  borrowRate: BigInt
+  blockNumber: Int!
+  blockTime: Int!
 }
 
-type Liquidation @entity {
-	"Transaction hash concatenated with log index"
-	id: ID!
-	asset: Asset
-	collateralAsset: Asset
-	debtAsset: Asset
-	amount: BigDecimal
-	collateralAmount: BigDecimal
-	amountUSD: BigDecimal
-	to: Account
-	from: Account
-	blockNumber: Int
-	blockTime: Int
-	protocol: Protocol
-	market: Market
-	liquidator: Account
-	received: BigDecimal
-	profit: BigDecimal
+type Repay implements Event @entity {
+  id: ID!
+  amount: BigDecimal
+  market: Market!
+  borrower: Account!
+  repayer: Account!
+  blockNumber: Int!
+  blockTime: Int!
+  useATokens: Boolean
 }
 
-type Deposit @entity {
-	id: ID!
-	asset: Asset
-	amount: BigDecimal
-	amountUSD: BigDecimal
-	to: Account
-	from: Account
-	onBehalfOf: Account
-	blockNumber: Int!
-	blockTime: Int!
-	protocol: Protocol
-	market: Market
-	referralCode: Int
+type Liquidation implements Event @entity {
+  id: ID!
+  asset: Asset
+  collateralAsset: Asset
+  debtAsset: Asset
+  amount: BigDecimal
+  collateralAmount: BigDecimal
+  amountUSD: BigDecimal
+  to: Account
+  from: Account
+  blockNumber: Int
+  blockTime: Int
+  protocol: Protocol
+  market: Market!
+  liquidator: Account
+  received: BigDecimal
+  profit: BigDecimal
 }
 
-type Withdraw @entity {
-	id: ID!
-	asset: Asset
-	amount: BigDecimal
-	amountUSD: BigDecimal
-	to: Account
-	from: Account
-	blockNumber: Int!
-	blockTime: Int!
-	protocol: Protocol
-	market: Market
+type Deposit implements Event @entity {
+  id: ID!
+  asset: Asset
+  amount: BigDecimal
+  amountUSD: BigDecimal
+  to: Account
+  from: Account
+  onBehalfOf: Account
+  blockNumber: Int!
+  blockTime: Int!
+  protocol: Protocol
+  market: Market
+  referralCode: Int
+}
+
+type Withdraw implements Event @entity {
+  id: ID!
+  asset: Asset
+  amount: BigDecimal
+  amountUSD: BigDecimal
+  to: Account
+  from: Account
+  blockNumber: Int!
+  blockTime: Int!
+  protocol: Protocol
+  market: Market
 }
 
 type Account @entity {
-	id: ID!
-	hasBorrowed: Boolean
+  id: ID!
+  hasBorrowed: Boolean
 }
 
 type AccountAToken @entity {
-	id: ID!
-	market: Market!
-	account: Account!
-	accrualBlockNumber: BigInt!
-	enteredMarket: Boolean!
-	aTokenBalance: BigDecimal!
-	totalUnderlyingSupplied: BigDecimal!
-	totalUnderlyingRedeemed: BigDecimal!
-	accountBorrowIndex: BigDecimal!
-	totalUnderlyingBorrowed: BigDecimal!
-	totalUnderlyingRepaid: BigDecimal!
-	storedBorrowBalance: BigDecimal!
-	transactions: [AccountATokenTransaction!]! @derivedFrom(field: "account")
+  id: ID!
+  market: Market!
+  account: Account!
+  accrualBlockNumber: BigInt!
+  enteredMarket: Boolean!
+  aTokenBalance: BigDecimal!
+  totalUnderlyingSupplied: BigDecimal!
+  totalUnderlyingRedeemed: BigDecimal!
+  accountBorrowIndex: BigDecimal!
+  totalUnderlyingBorrowed: BigDecimal!
+  totalUnderlyingRepaid: BigDecimal!
+  storedBorrowBalance: BigDecimal!
+  transactions: [AccountATokenTransaction!]! @derivedFrom(field: "account")
 }
 
 type AccountATokenTransaction @entity {
-	id: ID!
-	account: AccountAToken!
-	tx_hash: Bytes!
-	timestamp: BigInt!
-	block: BigInt!
-	logIndex: BigInt!
+  id: ID!
+  account: AccountAToken!
+  tx_hash: Bytes!
+  timestamp: BigInt!
+  block: BigInt!
+  logIndex: BigInt!
 }
 
 type Market @entity {
-	id: ID!
-	name: String
-	protocol: Protocol
-	depositAsset: Asset
-	borrowAsset: Asset
-	aTokenAddress: Bytes
-	stableDebtTokenAddress: Bytes
-	variableDebtTokenAddress: Bytes
-	interestRateStrategyAddress: Bytes
-	accruedToTreasury: BigDecimal
-	liquidityIndex: BigDecimal
-	currentLiquidityRate: BigDecimal
-	variableBorrowIndex: BigDecimal
-	currentVariableBorrowRate: BigDecimal
-	currentStableBorrowRate: BigDecimal
-	lastUpdateTimestamp: Int
-	unbacked: BigDecimal
-	isolationModeTotalDebt: BigDecimal
-	liquidityRate: BigInt!
+  id: ID!
+  name: String
+  protocol: Protocol
+  depositAsset: Asset
+  borrowAsset: Asset
+  aTokenAddress: Bytes
+  stableDebtTokenAddress: Bytes
+  variableDebtTokenAddress: Bytes
+  interestRateStrategyAddress: Bytes
+  accruedToTreasury: BigDecimal
+  liquidityIndex: BigDecimal
+  currentLiquidityRate: BigDecimal
+  variableBorrowIndex: BigDecimal
+  currentVariableBorrowRate: BigDecimal
+  currentStableBorrowRate: BigDecimal
+  lastUpdateTimestamp: Int
+  unbacked: BigDecimal
+  isolationModeTotalDebt: BigDecimal
+  liquidityRate: BigInt!
 }
 
 type Protocol @entity {
-	id: ID!
-	network: String!
-	type: String!
-	riskType: String
+  id: ID!
+  network: String!
+  type: String!
+  riskType: String
 }
 
 type Asset @entity {
-	id: ID!
-	symbol: String!
-	name: String!
-	decimals: Int!
+  id: ID!
+  symbol: String!
+  name: String!
+  decimals: Int!
 }

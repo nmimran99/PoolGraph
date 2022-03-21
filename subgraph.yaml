@@ -5,12 +5,33 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
+    name: PoolAddressesProviderRegistry
+    network: rinkeby
+    source:
+      address: "0x9e2b8bE39CcC5840D6Ae3450c3ad9f2ddE130d47"
+      abi: PoolAddressesProviderRegistry
+      startBlock: 10054843
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - AddressProvider
+      abis:
+        - name: PoolAddressesProviderRegistry
+          file: ./abis/PoolAddressesProviderRegistry.json
+      eventHandlers:
+        - event: AddressesProviderRegistered(indexed address,indexed uint256)
+          handler: handleAddressesProviderRegistered
+        - event: AddressesProviderUnregistered(indexed address,indexed uint256)
+          handler: handleAddressesProviderUnregistered
+      file: ./src/mappings/poolAddressesProviderRegistry.ts
+templates:
+  - kind: ethereum/contract
     name: Pool
     network: rinkeby
     source:
-      address: "0x3561c45840e2681495ACCa3c50Ef4dAe330c94F8"
       abi: Pool
-      startBlock: 10054908
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
@@ -38,4 +59,4 @@ dataSources:
           handler: handleIsolationModeTotalDebtUpdated
         - event: RebalanceStableBorrowRate(indexed address,indexed address)
           handler: handleRebalanceStableBorrowRate
-      file: ./src/mapping.ts
+      file: ./src/mappings/pool.ts
