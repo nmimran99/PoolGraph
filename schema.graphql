@@ -1,4 +1,4 @@
-type BorrowEvent @entity {
+type Borrow @entity {
 	id: ID!
 	market: Market!
 	borrower: Account!
@@ -10,7 +10,7 @@ type BorrowEvent @entity {
 	blockTime: Int!
 }
 
-type RepayEvent @entity {
+type Repay @entity {
 	id: ID!
 	amount: BigDecimal
 	market: Market!
@@ -21,7 +21,7 @@ type RepayEvent @entity {
 	useATokens: Boolean
 }
 
-type LiquidationEvent @entity {
+type Liquidation @entity {
 	"Transaction hash concatenated with log index"
 	id: ID!
 	asset: Asset
@@ -41,7 +41,7 @@ type LiquidationEvent @entity {
 	profit: BigDecimal
 }
 
-type DepositEvent @entity {
+type Deposit @entity {
 	id: ID!
 	asset: Asset
 	amount: BigDecimal
@@ -56,7 +56,7 @@ type DepositEvent @entity {
 	referralCode: Int
 }
 
-type WithdrawEvent @entity {
+type Withdraw @entity {
 	id: ID!
 	asset: Asset
 	amount: BigDecimal

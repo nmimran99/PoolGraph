@@ -2,6 +2,7 @@ import { Bytes, BigInt, BigDecimal } from "@graphprotocol/graph-ts";
 import { Account, AccountAToken, AccountATokenTransaction, Market, Protocol, Asset} from "../generated/schema";
 
 export let zeroBD = BigDecimal.fromString('0')
+export const AAVE_V3 = "0x3561c45840e2681495acca3c50ef4dae330c94f8"
 
 export function createAccount(accountID: string): Account {
     let account = new Account(accountID);
@@ -55,6 +56,7 @@ export function createAccountAToken(
   }
 
 
+  // TODO Fix - A transaction is always unique on chain - therefore there is no need to getOrCreate it. It will always just be created!
   export function getOrCreateAccountATokenTransaction(
     accountID: string,
     tx_hash: Bytes,
@@ -84,7 +86,7 @@ export function createAccountAToken(
 
 
 export function createMarket(marketID: string): Market {
-  let protocol = getProtocol("AAVEV3")
+  let protocol = getOrCreateProtocol(marketID)
   let market = new Market(marketID);
   market.protocol = protocol.id
   market.name = null
@@ -103,15 +105,16 @@ export function createMarket(marketID: string): Market {
 	market.lastUpdateTimestamp = 0
 	market.unbacked = null
 	market.isolationModeTotalDebt = null
-  market.liquidityRate = new BigInt(50000)
+  market.liquidityRate = new BigInt(50000) // TODO dk - read this from the contract
   
   market.save()
   
   return market;
 }
 
-export function createProtocol(): Protocol {
-    let protocol = new Protocol("AAVEV3")
+
+function createProtocol(id: string): Protocol {
+    let protocol = new Protocol(id)
     protocol.network = "Rinkeby"
     protocol.type = "Pooled"
     protocol.riskType = "Global"
@@ -119,7 +122,7 @@ export function createProtocol(): Protocol {
     return protocol
 }
 
-export function getMarket(marketId: string): Market {
+export function getOrCreateMarket(marketId: string): Market {
   let market = Market.load(marketId);
   if (market == null) {
     market = createMarket(marketId);
@@ -127,7 +130,7 @@ export function getMarket(marketId: string): Market {
   return market
 }
 
-export function getAccount(accountId: string): Account {
+export function getOrCreateAccount(accountId: string): Account {
   let account = Account.load(accountId);
   if (account == null) {
     account = createAccount(accountId);
@@ -135,14 +138,23 @@ export function getAccount(accountId: string): Account {
   return account
 }
 
-export function getProtocol(protocolId: string): Protocol {
-  let protocol = Protocol.load(protocolId)
+function marketAddressToProtocol(address: string): string{
+  if (address == AAVE_V3){
+    return "AAVE-V3"
+  }
+  return "unknown"
+}
+
+export function getOrCreateProtocol(address: string): Protocol {
+  let id = marketAddressToProtocol(address)
+  let protocol = Protocol.load(id)
   if (!protocol) {
-    protocol = createProtocol()
+    protocol = createProtocol(id)
   }
   return protocol
 }
 
+// TODO dk - this should be read from  contract too
 export function calculateLiquidationProfit(liquidationRate: BigInt, debt: BigDecimal): BigDecimal {
   if (!liquidationRate) {
     return new BigDecimal(new BigInt(0));

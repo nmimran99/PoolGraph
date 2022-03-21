@@ -1,22 +1,21 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts"
 import {
-  Borrow,
+  Borrow as BorrowEvent,
   IsolationModeTotalDebtUpdated,
   RebalanceStableBorrowRate,
-  Repay,
+  Repay as RepayEvent,
   SwapBorrowRateMode,
   LiquidationCall,
-  Withdraw,
-  DepositCall,
+  Withdraw as WithdrawEvent,
   Supply
 } from "../generated/Pool/Pool"
-import { BorrowEvent, Account, Market, RepayEvent, LiquidationEvent, WithdrawEvent, DepositEvent } from "../generated/schema"
-import { createAccount, updateCommonATokenStats, createMarket, getMarket, getAccount, getProtocol, calculateLiquidationProfit } from "./helpers";
+import { Borrow, Account, Market, Repay, Liquidation, Withdraw, Deposit } from "../generated/schema"
+import { updateCommonATokenStats, getOrCreateMarket, getOrCreateAccount, getOrCreateProtocol, calculateLiquidationProfit } from "./helpers";
 
-export function handleBorrow(event: Borrow): void {
-  
-  let market = getMarket(event.address.toHexString());
-  let borrower = getAccount(event.params.user.toHexString())
+export function handleBorrow(event: BorrowEvent): void {
+  getOrCreateProtocol(event.address.toHexString())
+  let market = getOrCreateMarket(event.address.toHexString());
+  let borrower = getOrCreateAccount(event.params.user.toHexString())
   borrower.hasBorrowed = true;
   borrower.save();
 
@@ -37,7 +36,7 @@ export function handleBorrow(event: Borrow): void {
   let borrowId = event.transaction.hash.toHexString();
   let borrowAmount = event.params.amount.toBigDecimal();
 
-  let borrow = new BorrowEvent(borrowId);
+  let borrow = new Borrow(borrowId);
 
   borrow.market = market.id
   borrow.borrower = borrower.id
@@ -50,18 +49,12 @@ export function handleBorrow(event: Borrow): void {
   borrow.save();
 }
 
-export function handleIsolationModeTotalDebtUpdated(
-  event: IsolationModeTotalDebtUpdated
-): void {}
 
-export function handleRebalanceStableBorrowRate(
-  event: RebalanceStableBorrowRate
-): void {}
-
-export function handleRepay(event: Repay): void {
-  let market = getMarket(event.address.toHexString());
-  let account = getAccount(event.params.user.toHexString())
-  let repayer = getAccount(event.params.repayer.toHexString())
+export function handleRepay(event: RepayEvent): void {
+  getOrCreateProtocol(event.address.toHexString())
+  let market = getOrCreateMarket(event.address.toHexString());
+  let account = getOrCreateAccount(event.params.user.toHexString())
+  let repayer = getOrCreateAccount(event.params.repayer.toHexString())
 
   let aTokenStats = updateCommonATokenStats(
     market.id,
@@ -84,7 +77,7 @@ export function handleRepay(event: Repay): void {
 
   let repayAmount = event.params.amount.toBigDecimal();
 
-  let repay = new RepayEvent(repayID)
+  let repay = new Repay(repayID)
 
   repay.market = market.id
   repay.amount = repayAmount
@@ -97,17 +90,14 @@ export function handleRepay(event: Repay): void {
   repay.save()
 }
 
-export function handleSwapBorrowRateMode(event: SwapBorrowRateMode): void {}
-
-
-export function handleLiquidation(event: LiquidationCall): void {
-  let market = getMarket(event.address.toHexString());
-  let protocol = getProtocol("AAVEV3")
+export function handleLiquidationCall(event: LiquidationCall): void {
+  getOrCreateProtocol(event.address.toHexString())
+  let market = getOrCreateMarket(event.address.toHexString());
   let asset = market.depositAsset
   let amount = event.params.debtToCover.toBigDecimal()
   let collateralAmount = event.params.liquidatedCollateralAmount.toBigDecimal()
-  let liquidator = getAccount(event.params.liquidator.toHexString())
-  let liquidatee = getAccount(event.params.user.toHexString())
+  let liquidator = getOrCreateAccount(event.params.liquidator.toHexString())
+  let liquidatee = getOrCreateAccount(event.params.user.toHexString())
   let collateralAsset = event.params.collateralAsset.toHexString()
   let debtAsset = event.params.debtAsset.toHexString()
   let liquidationId = event.transaction.hash
@@ -115,13 +105,10 @@ export function handleLiquidation(event: LiquidationCall): void {
     .concat('-')
     .concat(event.transactionLogIndex.toString())
   let received = calculateLiquidationProfit(market.liquidityRate, amount)
-  
-  
 
-
-  let liquidation = new LiquidationEvent(liquidationId)
+  let liquidation = new Liquidation(liquidationId)
   liquidation.id = liquidationId
-  liquidation.protocol = protocol.id
+  liquidation.protocol = market.protocol
   liquidation.market = market.id
   liquidation.asset = asset
   liquidation.collateralAsset = collateralAsset
@@ -142,35 +129,35 @@ export function handleLiquidation(event: LiquidationCall): void {
   liquidation.save()
 }
 
-export function handleWithdraw(event: Withdraw): void {
-  let market = getMarket(event.params.reserve.toHexString())
-  let protocol = getProtocol("AAVEV3")
-  let user = getAccount(event.params.user.toHexString())
-  let to = getAccount(event.params.to.toHexString())
+export function handleWithdraw(event: WithdrawEvent): void {
+  getOrCreateProtocol(event.address.toHexString())
+  let market = getOrCreateMarket(event.params.reserve.toHexString())
+  let user = getOrCreateAccount(event.params.user.toHexString())
+  let to = getOrCreateAccount(event.params.to.toHexString())
   let amount = event.params.amount.toBigDecimal()
   let withdrawId = event.transaction.hash
     .toHex()
     .concat('-')
     .concat(event.transactionLogIndex.toString())
 
-  let withdrawal = new WithdrawEvent(withdrawId)
+  let withdrawal = new Withdraw(withdrawId)
   withdrawal.asset = market.depositAsset
   withdrawal.amount = amount
   withdrawal.to = user.id
   withdrawal.from = market.id
   withdrawal.blockNumber = event.block.number.toI32()
   withdrawal.blockTime = event.block.timestamp.toI32()
-  withdrawal.protocol = protocol.id
+  withdrawal.protocol = market.protocol
   withdrawal.market = market.id
 
   withdrawal.save()
 }
 
 export function handleDeposit(event: Supply): void {
-  let market = getMarket(event.params.reserve.toHexString())
-  let protocol = getProtocol("AAVEV3")
-  let user = getAccount(event.params.user.toHexString())
-  let onBehalfOf = getAccount(event.params.onBehalfOf.toHexString())
+  getOrCreateProtocol(event.address.toHexString())
+  let market = getOrCreateMarket(event.params.reserve.toHexString())
+  let user = getOrCreateAccount(event.params.user.toHexString())
+  let onBehalfOf = getOrCreateAccount(event.params.onBehalfOf.toHexString())
   let amount = event.params.amount.toBigDecimal()
   let referralCode = event.params.referralCode
   let depositId = event.transaction.hash
@@ -178,7 +165,7 @@ export function handleDeposit(event: Supply): void {
   .concat('-')
   .concat(event.transactionLogIndex.toString())
 
-  let deposit = new DepositEvent(depositId)
+  let deposit = new Deposit(depositId)
   deposit.asset = market.depositAsset
   deposit.amount = amount
   deposit.from = user.id
@@ -187,10 +174,19 @@ export function handleDeposit(event: Supply): void {
   deposit.blockNumber = event.block.number.toI32()
   deposit.blockTime = event.block.timestamp.toI32()
   deposit.market = market.id
-  deposit.protocol = protocol.id
+  deposit.protocol = market.protocol
   deposit.referralCode = referralCode
 
   deposit.save()
 }
 
 
+export function handleIsolationModeTotalDebtUpdated(
+  event: IsolationModeTotalDebtUpdated
+): void {}
+
+export function handleRebalanceStableBorrowRate(
+  event: RebalanceStableBorrowRate
+): void {}
+
+export function handleSwapBorrowRateMode(event: SwapBorrowRateMode): void {}
